@@ -1,16 +1,9 @@
 package io.cloudsoft.winrm4j.service;
 
-import java.util.List;
-
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebResult;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
-import javax.xml.ws.Action;
-import javax.xml.ws.BindingType;
-import javax.xml.ws.RequestWrapper;
-
+import io.cloudsoft.winrm4j.service.enumerate.EnumerateRequest;
+import io.cloudsoft.winrm4j.service.enumerate.EnumerateResponse;
+import io.cloudsoft.winrm4j.service.enumerate.PullRequest;
+import io.cloudsoft.winrm4j.service.enumerate.PullResponse;
 import io.cloudsoft.winrm4j.service.shell.Receive;
 import io.cloudsoft.winrm4j.service.shell.ReceiveResponse;
 import io.cloudsoft.winrm4j.service.shell.Shell;
@@ -20,6 +13,16 @@ import io.cloudsoft.winrm4j.service.wsman.Locale;
 import io.cloudsoft.winrm4j.service.wsman.OptionSetType;
 import io.cloudsoft.winrm4j.service.wsman.SelectorSetType;
 import io.cloudsoft.winrm4j.service.wsman.Signal;
+import jakarta.jws.WebMethod;
+import jakarta.jws.WebParam;
+import jakarta.jws.WebResult;
+import jakarta.jws.WebService;
+import jakarta.jws.soap.SOAPBinding;
+import jakarta.xml.ws.Action;
+import jakarta.xml.ws.BindingType;
+import jakarta.xml.ws.RequestWrapper;
+
+import java.util.List;
 
 //https://msdn.microsoft.com/en-us/library/cc251731.aspx
 //https://msdn.microsoft.com/en-us/library/cc251526.aspx
@@ -49,7 +52,9 @@ public class WinRm {
         @WebParam(name = "Locale", targetNamespace = "http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd", header = true)
         Locale locale,
         @WebParam(name = "SelectorSet", targetNamespace = "http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd", header = true)
-        SelectorSetType selectorSet
+        SelectorSetType selectorSet,
+        @WebParam(name = "OptionSet", targetNamespace = "http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd", header = true)
+        OptionSetType optionSet
     ) {
         return null;
     }
@@ -126,6 +131,53 @@ public class WinRm {
         Shell shell,
         @WebParam(name = "ResourceURI", targetNamespace = "http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd", header = true)
         String resourceURI,
+        @WebParam(name = "MaxEnvelopeSize", targetNamespace = "http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd", header = true)
+        int maxEnvelopeSize,
+        @WebParam(name = "OperationTimeout", targetNamespace = "http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd", header = true)
+        String operationTimeout,
+        @WebParam(name = "Locale", targetNamespace = "http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd", header = true)
+        Locale locale,
+        @WebParam(name = "OptionSet", targetNamespace = "http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd", header = true)
+        OptionSetType optionSet
+    ) {
+
+        return null;
+    }
+
+    @WebMethod(operationName = "Enumerate", action = "http://schemas.xmlsoap.org/ws/2004/09/enumeration/Enumerate")
+    @Action(input = "http://schemas.xmlsoap.org/ws/2004/09/enumeration/Enumerate", output = "http://schemas.xmlsoap.org/ws/2004/09/enumeration/EnumerateResponse")
+    @WebResult(name = "EnumerateResponse", targetNamespace = "http://schemas.xmlsoap.org/ws/2004/09/enumeration", partName = "EnumerateResponse")
+    @SOAPBinding(parameterStyle = SOAPBinding.ParameterStyle.BARE)
+    public EnumerateResponse enumerate(
+        @WebParam(name = "Enumerate", targetNamespace = "http://schemas.xmlsoap.org/ws/2004/09/enumeration")
+        EnumerateRequest enumerate,
+        @WebParam(name = "ResourceURI", targetNamespace = "http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd", header = true)
+        String resourceURI,
+        @WebParam(name = "SessionId", targetNamespace = "http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd", header = true)
+        String sessionId,
+        @WebParam(name = "MaxEnvelopeSize", targetNamespace = "http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd", header = true)
+        int maxEnvelopeSize,
+        @WebParam(name = "OperationTimeout", targetNamespace = "http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd", header = true)
+        String operationTimeout,
+        @WebParam(name = "Locale", targetNamespace = "http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd", header = true)
+        Locale locale,
+        @WebParam(name = "OptionSet", targetNamespace = "http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd", header = true)
+        OptionSetType optionSet
+    ) {
+        return null;
+    }
+
+    @WebMethod(operationName = "EnumeratePull", action = "http://schemas.xmlsoap.org/ws/2004/09/enumeration/Pull")
+    @Action(input = "http://schemas.xmlsoap.org/ws/2004/09/enumeration/Pull", output = "http://schemas.xmlsoap.org/ws/2004/09/enumeration/PullResponse")
+    @WebResult(name = "PullResponse", targetNamespace = "http://schemas.xmlsoap.org/ws/2004/09/enumeration", partName = "PullResponse")
+    @SOAPBinding(parameterStyle = SOAPBinding.ParameterStyle.BARE)
+    public PullResponse enumeratePull(
+        @WebParam(name = "Pull", targetNamespace = "http://schemas.xmlsoap.org/ws/2004/09/enumeration")
+        PullRequest pull,
+        @WebParam(name = "ResourceURI", targetNamespace = "http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd", header = true)
+        String resourceURI,
+        @WebParam(name = "SessionId", targetNamespace = "http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd", header = true)
+        String sessionId,
         @WebParam(name = "MaxEnvelopeSize", targetNamespace = "http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd", header = true)
         int maxEnvelopeSize,
         @WebParam(name = "OperationTimeout", targetNamespace = "http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd", header = true)

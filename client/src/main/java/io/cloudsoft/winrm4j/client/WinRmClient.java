@@ -2,7 +2,63 @@ package io.cloudsoft.winrm4j.client;
 
 import io.cloudsoft.winrm4j.client.encryption.AsyncHttpEncryptionAwareConduitFactory;
 import io.cloudsoft.winrm4j.client.ntlm.NTCredentialsWithEncryption;
+import io.cloudsoft.winrm4j.client.ntlm.NtlmMasqAsSpnegoSchemeFactory;
+import io.cloudsoft.winrm4j.client.shell.EnvironmentVariable;
+import io.cloudsoft.winrm4j.client.shell.EnvironmentVariableList;
+import io.cloudsoft.winrm4j.client.shell.Shell;
 import io.cloudsoft.winrm4j.client.spnego.WsmanViaSpnegoSchemeFactory;
+import io.cloudsoft.winrm4j.client.transfer.ResourceCreated;
+import io.cloudsoft.winrm4j.client.wsman.Locale;
+import io.cloudsoft.winrm4j.client.wsman.OptionSetType;
+import io.cloudsoft.winrm4j.client.wsman.OptionType;
+import jakarta.xml.ws.BindingProvider;
+import jakarta.xml.ws.handler.Handler;
+import org.apache.cxf.Bus.BusState;
+import org.apache.cxf.configuration.jsse.TLSClientParameters;
+import org.apache.cxf.endpoint.Client;
+import org.apache.cxf.frontend.ClientProxy;
+import org.apache.cxf.interceptor.security.NamePasswordCallbackHandler;
+import org.apache.cxf.service.model.ServiceInfo;
+import org.apache.cxf.transport.http.HTTPConduitFactory;
+import org.apache.cxf.transport.http.asyncclient.AsyncHTTPConduit;
+import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
+import org.apache.cxf.ws.addressing.policy.MetadataConstants;
+import org.apache.cxf.ws.policy.PolicyConstants;
+import org.apache.http.auth.AuthSchemeProvider;
+import org.apache.http.auth.Credentials;
+import org.apache.http.auth.KerberosCredentials;
+import org.apache.http.client.config.AuthSchemes;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.impl.auth.KerberosSchemeFactory;
+import org.apache.http.impl.auth.NTLMSchemeFactory;
+import org.apache.neethi.Policy;
+import org.apache.neethi.builders.PrimitiveAssertion;
+import org.ietf.jgss.GSSContext;
+import org.ietf.jgss.GSSCredential;
+import org.ietf.jgss.GSSException;
+import org.ietf.jgss.GSSManager;
+import org.ietf.jgss.GSSName;
+import org.ietf.jgss.Oid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import javax.security.auth.Subject;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.login.AppConfigurationEntry;
+import javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag;
+import javax.security.auth.login.Configuration;
+import javax.security.auth.login.LoginContext;
+import javax.security.auth.login.LoginException;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 import java.io.Writer;
 import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
@@ -21,67 +77,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Predicate;
-
 import java.util.function.Supplier;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import javax.security.auth.Subject;
-import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.login.AppConfigurationEntry;
-import javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag;
-import javax.security.auth.login.Configuration;
-import javax.security.auth.login.LoginContext;
-import javax.security.auth.login.LoginException;
-import javax.xml.ws.BindingProvider;
-import javax.xml.ws.handler.Handler;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
-
-import org.apache.cxf.Bus.BusState;
-import org.apache.cxf.configuration.jsse.TLSClientParameters;
-import org.apache.cxf.endpoint.Client;
-import org.apache.cxf.frontend.ClientProxy;
-import org.apache.cxf.interceptor.security.NamePasswordCallbackHandler;
-import org.apache.cxf.service.model.ServiceInfo;
-import org.apache.cxf.transport.http.HTTPConduitFactory;
-import org.apache.cxf.transport.http.asyncclient.AsyncHTTPConduit;
-import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
-import org.apache.cxf.ws.addressing.policy.MetadataConstants;
-import org.apache.cxf.ws.policy.PolicyConstants;
-import org.apache.http.auth.AuthSchemeProvider;
-import org.apache.http.auth.Credentials;
-import org.apache.http.auth.KerberosCredentials;
-import org.apache.http.client.config.AuthSchemes;
-import org.apache.http.config.Registry;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.impl.auth.KerberosSchemeFactory;
-import org.apache.http.impl.auth.NTLMSchemeFactory;
-import org.apache.http.impl.client.TargetAuthenticationStrategy;
-import org.apache.neethi.Policy;
-import org.apache.neethi.builders.PrimitiveAssertion;
-import org.ietf.jgss.GSSContext;
-import org.ietf.jgss.GSSCredential;
-import org.ietf.jgss.GSSException;
-import org.ietf.jgss.GSSManager;
-import org.ietf.jgss.GSSName;
-import org.ietf.jgss.Oid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.w3c.dom.Element;
-
-import io.cloudsoft.winrm4j.client.ntlm.NtlmMasqAsSpnegoSchemeFactory;
-import io.cloudsoft.winrm4j.client.shell.EnvironmentVariable;
-import io.cloudsoft.winrm4j.client.shell.EnvironmentVariableList;
-import io.cloudsoft.winrm4j.client.shell.Shell;
-import io.cloudsoft.winrm4j.client.transfer.ResourceCreated;
-import io.cloudsoft.winrm4j.client.wsman.Locale;
-import io.cloudsoft.winrm4j.client.wsman.OptionSetType;
-import io.cloudsoft.winrm4j.client.wsman.OptionType;
-import sun.awt.image.ImageWatched.Link;
 
 /**
  * TODO confirm if commands can be called in parallel in one shell (probably not)!
@@ -96,6 +92,7 @@ public class WinRmClient implements AutoCloseable {
     private final Locale locale;
     private final Map<String, String> environment;
     private final PayloadEncryptionMode payloadEncryptionMode;
+    private final int codePage;
     private final WinRm service;
     private AsyncHttpEncryptionAwareConduitFactory factoryToCleanup;
 
@@ -205,6 +202,7 @@ public class WinRmClient implements AutoCloseable {
 
         this.workingDirectory = builder.workingDirectory;
         this.locale = builder.locale;
+        this.codePage = builder.codePage;
         this.operationTimeout = toDuration(builder.operationTimeout);
         this.retryReceiveAfterOperationTimeout = builder.retryReceiveAfterOperationTimeout;
         this.environment = builder.environment;
@@ -534,7 +532,7 @@ public class WinRmClient implements AutoCloseable {
         optSetCreate.getOption().add(optNoProfile);
         OptionType optCodepage = new OptionType();
         optCodepage.setName("WINRS_CODEPAGE");
-        optCodepage.setValue("437");
+        optCodepage.setValue(Integer.toString(codePage));
         optSetCreate.getOption().add(optCodepage);
 
         ResourceCreated resourceCreated = null;
@@ -563,6 +561,42 @@ public class WinRmClient implements AutoCloseable {
             }
         }
         throw new IllegalStateException("Shell ID not fount in " + resourceCreated);
+    }
+
+    /**
+     * Executes a WMI query and returns all results as a list.
+     *
+     * @param namespace wmi namespace, default may be "root/cimv2/*"
+     * @param query     wmi query, e.g. "Select * From Win32_TimeZone"
+     * @return list of nodes
+     */
+    public List<Node> runWql(String namespace, String query) {
+        String resourceUri = "http://schemas.microsoft.com/wbem/wsman/1/wmi/" + namespace;
+        String dialect = "http://schemas.microsoft.com/wbem/wsman/1/WQL";
+        return enumerateAndPull(resourceUri, dialect, query);
+    }
+
+    /**
+     * Executes, enumerates and returns the result list.
+     *
+     * @param resourceUri remote resource uri to filter (must support enumeration)
+     * @param dialect     filter dialect
+     * @param filter      resource filter
+     * @return list of nodes
+     */
+    public List<Node> enumerateAndPull(String resourceUri, String dialect, String filter) {
+        try (EnumerateCommand command = new EnumerateCommand(
+                winrm,
+                resourceUri,
+                32000L,
+                () -> operationTimeout,
+                () -> locale,
+                retryReceiveAfterOperationTimeout
+        )) {
+            return command.execute(filter, dialect);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     /**

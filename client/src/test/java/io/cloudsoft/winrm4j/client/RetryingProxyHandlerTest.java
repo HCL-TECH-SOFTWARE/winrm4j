@@ -14,8 +14,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
-import javax.xml.ws.WebServiceException;
+import jakarta.xml.ws.WebServiceException;
 
+import io.cloudsoft.winrm4j.client.enumeration.EnumerateResponse;
+import io.cloudsoft.winrm4j.client.enumeration.PullResponse;
+import io.cloudsoft.winrm4j.client.wsman.Enumerate;
+import io.cloudsoft.winrm4j.client.wsman.Pull;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -171,8 +175,8 @@ public class RetryingProxyHandlerTest {
 		}
 
 		@Override
-		public ReceiveResponse receive(Receive receive, String resourceURI, int maxEnvelopeSize, String operationTimeout, Locale locale, SelectorSetType selectorSet) {
-			RecordedCall call = new RecordedCall("receive", Arrays.asList(receive, resourceURI, maxEnvelopeSize, operationTimeout, locale, selectorSet));
+		public ReceiveResponse receive(Receive receive, String resourceURI, int maxEnvelopeSize, String operationTimeout, Locale locale, SelectorSetType selectorSet, OptionSetType optionSet) {
+			RecordedCall call = new RecordedCall("receive", Arrays.asList(receive, resourceURI, maxEnvelopeSize, operationTimeout, locale, selectorSet, optionSet));
 			calls.add(call);
 			return (ReceiveResponse) handler.apply(call);
 		}
@@ -196,6 +200,20 @@ public class RetryingProxyHandlerTest {
 			RecordedCall call = new RecordedCall("create", Arrays.asList(shell, resourceURI, maxEnvelopeSize, operationTimeout, locale, optionSet));
 			calls.add(call);
 			return (ResourceCreated) handler.apply(call);
+		}
+
+		@Override
+		public EnumerateResponse enumerate(Enumerate enumerate, String resourceURI, String sessionId, int maxEnvelopeSize, String operationTimeout, Locale locale, OptionSetType optionSet) {
+			RecordedCall call = new RecordedCall("enumerate", Arrays.asList(enumerate, resourceURI, sessionId, maxEnvelopeSize, operationTimeout, locale, optionSet));
+			calls.add(call);
+			return (EnumerateResponse) handler.apply(call);
+		}
+
+		@Override
+		public PullResponse enumeratePull(Pull pull, String resourceURI, String sessionId, int maxEnvelopeSize, String operationTimeout, Locale locale, OptionSetType optionSet) {
+			RecordedCall call = new RecordedCall("enumeratePull", Arrays.asList(pull, resourceURI, sessionId, maxEnvelopeSize, operationTimeout, locale, optionSet));
+			calls.add(call);
+			return (PullResponse) handler.apply(call);
 		}
 	}
 }
