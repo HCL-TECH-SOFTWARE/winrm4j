@@ -238,7 +238,7 @@ public class WinRmTool {
 
     private WinRmTool(String address, String domain, String username,
                       String password, String authenticationScheme,
-                       boolean disableCertificateChecks, String workingDirectory,
+                      boolean allowChunking, boolean disableCertificateChecks, String workingDirectory,
                       Map<String, String> environment, HostnameVerifier hostnameVerifier,
                       SSLSocketFactory sslSocketFactory, SSLContext sslContext, WinRmClientContext context,
                       boolean requestNewKerberosTicket, PayloadEncryptionMode payloadEncryptionMode,
@@ -249,6 +249,7 @@ public class WinRmTool {
         this.username = username;
         this.password = password;
         this.authenticationScheme = authenticationScheme;
+		this.allowChunking = false;
         this.workingDirectory = workingDirectory;
         this.environment = environment;
         this.hostnameVerifier = hostnameVerifier;
